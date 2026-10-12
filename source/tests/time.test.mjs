@@ -1,0 +1,14 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {deriveSessions,clipSessions,duration,periodBounds,IDLE} from '../lib/time.ts';
+const base=Date.parse('2026-09-29T13:00:00Z');
+const e=(min,kind='activity',project='A',id=String(min),person='z',device='d')=>({id,kind,person_id:person,device_id:device,project_id:project,at:base+min*60000,received:base+min*60000});
+test('Open totals do not include future idle allowance; closure includes 30 minutes',()=>{const events=[e(0),e(20),e(40),e(60)];assert.equal(duration(deriveSessions(events,base+70*60000)),70*60000);const s=deriveSessions(events,base+100*60000);assert.equal(s.length,1);assert.equal(s[0].end,base+90*60000);assert.equal(s[0].open,false);});
+test('Exactly thirty minute gap starts a new session',()=>{const s=deriveSessions([e(0),e(30)],base+90*60000);assert.equal(s.length,2);assert.equal(s[0].end,s[1].start);});
+test('Projects switch without overlapping idle tails',()=>{const s=deriveSessions([e(0),e(20),e(25,'activity','B')],base+60*60000);assert.equal(s.length,2);assert.equal(s[0].end,s[1].start);assert.equal(duration(s),55*60000);});
+test('Two tabs and devices, duplicate and out-of-order deliveries give same result',()=>{const a=[e(0),e(10,'activity','A','b','z','d2'),e(20)];const b=[a[2],a[0],a[1],a[1]];assert.deepEqual(deriveSessions(a,base+80*60000),deriveSessions(b,base+80*60000));assert.equal(duration(deriveSessions(b,base+80*60000)),50*60000);});
+test('Stop applies across devices until explicit resume',()=>{const s=deriveSessions([e(0),e(10,'stop'),e(15,'activity','A','other','z','d2'),e(20,'resume'),e(25)],base+60*60000);assert.equal(s.length,2);assert.equal(s[0].end,base+10*60000);assert.equal(s[1].start,base+25*60000);});
+test('Different people count as separate person-hours',()=>assert.equal(duration(deriveSessions([e(0),e(0,'activity','A','y','y')],base+60*60000)),60*60000));
+test('Clipping periods preserves total without gaps',()=>{const s=deriveSessions([e(0),e(20)],base+100*60000);assert.equal(duration(clipSessions(s,base,base+15*60000))+duration(clipSessions(s,base+15*60000,base+100*60000)),duration(s));});
+test('New York DST spring and autumn days have 23 and 25 hours',()=>{const a=periodBounds('day','2026-03-08'),b=periodBounds('day','2026-11-01');assert.equal(a.to-a.from,23*3600000);assert.equal(b.to-b.from,25*3600000);});
+test('Weeks begin on Monday and calendar years use local boundaries',()=>{const w=periodBounds('week','2026-09-29');assert.equal(new Date(w.from).toISOString(),'2026-09-28T04:00:00.000Z');const y=periodBounds('year','2026-09-29');assert.equal(new Date(y.from).toISOString(),'2026-01-01T05:00:00.000Z');assert.equal(new Date(y.to).toISOString(),'2027-01-01T05:00:00.000Z');});
+test('A later project does not extend an already timed-out session',()=>{const s=deriveSessions([e(0),e(90,'activity','B')],base+180*60000);assert.equal(s[0].end,base+IDLE);assert.equal(s[1].start,base+90*60000);});

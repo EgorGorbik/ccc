@@ -1,0 +1,43 @@
+name: falcon-time
+services:
+  app:
+    build: .
+    image: falcon-time:1.2-vps
+    container_name: falcon-time
+    init: true
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "127.0.0.1:3187:3000"
+    environment:
+      FALCON_ORIGIN: https://falconai.time
+      FALCON_DATA_DIR: /data
+      FALCON_BACKUP_DIR: /backups
+      FALCON_OWNER_CODE_FILE: /run/secrets/owner_code
+    volumes:
+      - falcon_time_data:/data
+      - falcon_time_backups:/backups
+    secrets:
+      - owner_code
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m,uid=1000,gid=1000
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 128
+    stop_grace_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+volumes:
+  falcon_time_data:
+    name: falcon_time_data
+  falcon_time_backups:
+    name: falcon_time_backups
+secrets:
+  owner_code:
+    file: ./secrets/owner_code

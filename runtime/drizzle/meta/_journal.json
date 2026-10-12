@@ -1,0 +1,41 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1790701813270,
+      "tag": "0000_regular_kronos",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1790702010691,
+      "tag": "0001_hot_mandroid",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1790737923401,
+      "tag": "0002_handy_christian_walker",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1790738661995,
+      "tag": "0003_wonderful_pestilence",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1790864548770,
+      "tag": "0004_backend_integrity",
+      "breakpoints": true
+    }
+  ]
+}

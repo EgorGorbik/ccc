@@ -1,0 +1,33 @@
+{
+  "name": "falcon-time-desktop",
+  "version": "1.2.0",
+  "private": true,
+  "description": "Falcon Time desktop agent — consent-based periodic screen captures for the Falcon Time cabinet.",
+  "main": "main.js",
+  "scripts": {
+    "start": "node scripts/ensure-screen-usage.mjs && electron .",
+    "dist": "electron-builder --mac --arm64"
+  },
+  "devDependencies": {
+    "electron": "^34.2.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "llc.falconai.time.desktop",
+    "productName": "Falcon Time",
+    "asar": true,
+    "files": ["main.js", "preload.js", "lib/**/*", "renderer/**/*", "assets/**/*"],
+    "mac": {
+      "target": [{"target": "dmg", "arch": ["arm64"]}],
+      "category": "public.app-category.productivity",
+      "icon": "assets/icon.png",
+      "hardenedRuntime": true,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "extendInfo": {
+        "NSScreenCaptureUsageDescription": "Falcon Time делает снимки основного экрана каждые 3 минуты для учёта рабочего времени. Снимки можно приостановить в строке меню.",
+        "LSUIElement": false
+      }
+    }
+  }
+}

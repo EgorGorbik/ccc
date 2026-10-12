@@ -1,0 +1,18 @@
+{
+  "application": "Falcon Time",
+  "version": "1.2.0-vps",
+  "commit": "05130e5dad650654a62364044ca001cbbd3c850a",
+  "origin": "https://falconai.time",
+  "target_server": "139.60.162.14",
+  "platform": "linux/amd64",
+  "container": "falcon-time",
+  "verified": {
+    "typescript": true,
+    "tests": 49,
+    "production_build": true,
+    "http_smoke": true,
+    "independent_review_open_P1_P2": 0
+  },
+  "deployed": false,
+  "deployment_blocker": "No reachable VPS channel; Docker unavailable in current environment; gh-runner has no Docker/sudo"
+}

@@ -1,0 +1,5 @@
+source
+secrets
+data
+backups
+*.sqlite*
