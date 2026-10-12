@@ -25,6 +25,7 @@ const methods: Record<string,string|string[]> = {
   devices:'POST', 'device/revoke':'POST', tracking:'POST', heartbeat:'POST',
   events:'POST', review:'POST', backup:'POST', manual:'POST', correction:'POST',
   screenshots:['GET','POST'], 'screenshots/file':'GET', 'work-blocks':['GET','POST'], pay:['GET','POST'],
+  'office/inbox':'GET', 'office/session':'GET', 'office/watch':'POST', 'office/signal':'POST',
 };
 export function checkMethod(path: string, method: string) {
   const allowed = methods[path];

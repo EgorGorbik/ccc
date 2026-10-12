@@ -215,6 +215,58 @@ test('The exported backup restores through the actual CLI without reviving devic
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
 
+test('Home office creates missing tables instead of crashing',async()=>{
+ const owner=await setup();
+ sqlite.exec('DROP TABLE IF EXISTS office_signals');
+ sqlite.exec('DROP TABLE IF EXISTS office_sessions');
+ const watch=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'camera'}});
+ assert.equal(watch.status,200);assert.equal(watch.data.kind,'camera');
+});
+
+test('Admin can open a video watch; the employee signals, others cannot',async()=>{
+ const owner=await setup(),other=await member(owner,'yura'),employee=await member(owner);
+ assert.equal((await request('office/watch',{cookie:employee,body:{personId:'yura',kind:'camera'}})).status,403);
+ const watch=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'camera'}});
+ assert.equal(watch.status,200);assert.equal(watch.data.kind,'camera');assert.equal(watch.data.status,'requested');
+ const inbox=await request('office/inbox',{cookie:employee});
+ assert.equal(inbox.status,200);assert.equal(inbox.data.sessions.length,1);assert.equal(inbox.data.sessions[0].id,watch.data.id);
+ assert.equal((await request('office/inbox',{cookie:other})).data.sessions.length,0);
+ assert.equal((await request('office/signal',{cookie:owner,body:{sessionId:watch.data.id,type:'offer',payload:JSON.stringify({type:'offer',sdp:'v=0'})}})).status,403);
+ const offer=await request('office/signal',{cookie:employee,body:{sessionId:watch.data.id,type:'offer',payload:JSON.stringify({type:'offer',sdp:'v=0'})}});
+ assert.equal(offer.status,200);assert.equal(offer.data.session.status,'connecting');
+ const answer=await request('office/signal',{cookie:owner,body:{sessionId:watch.data.id,type:'answer',payload:JSON.stringify({type:'answer',sdp:'v=0'})}});
+ assert.equal(answer.status,200);assert.equal(answer.data.session.status,'live');
+ const pulled=await request('office/session?id='+watch.data.id,{cookie:owner});
+ assert.equal(pulled.status,200);assert.equal(pulled.data.signals.length,2);
+ assert.equal((await request('office/session?id='+watch.data.id,{cookie:other})).status,403);
+ const screen=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'screen'}});
+ assert.equal(screen.status,200);assert.equal(screen.data.kind,'screen');
+ const hangup=await request('office/signal',{cookie:owner,body:{sessionId:screen.data.id,type:'hangup',payload:'{}'}});
+ assert.equal(hangup.status,200);assert.equal(hangup.data.session.status,'ended');
+});
+
+test('Several viewers can watch the same employee camera at once',async()=>{
+ const owner=await setup(),employee=await member(owner);
+ const first=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'camera'}});
+ const second=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'camera'}});
+ assert.equal(first.status,200);assert.equal(second.status,200);assert.notEqual(first.data.id,second.data.id);
+ const inbox=await request('office/inbox',{cookie:employee});
+ assert.equal(inbox.data.sessions.length,2);
+ const hangup=await request('office/signal',{cookie:owner,body:{sessionId:first.data.id,type:'hangup',payload:'{}'}});
+ assert.equal(hangup.status,200);
+ const still=await request('office/inbox',{cookie:employee});
+ assert.equal(still.data.sessions.length,1);assert.equal(still.data.sessions[0].id,second.data.id);
+});
+
+test('A watch session ends if the viewer stops polling so the employee stops sending',async()=>{
+ const owner=await setup(),employee=await member(owner);
+ const watch=await request('office/watch',{cookie:owner,body:{personId:'daniil',kind:'camera'}});
+ assert.equal(watch.status,200);
+ assert.equal((await request('office/inbox',{cookie:employee})).data.sessions.length,1);
+ now+=21000;
+ assert.equal((await request('office/inbox',{cookie:employee})).data.sessions.length,0);
+});
+
 test('A failed audit write rolls back a manual time correction',async()=>{
  const owner=await setup();failSql=/INSERT INTO audit/;
  const result=await request('manual',{cookie:owner,body:{personId:'zafar',projectId:'homekept',start:now-7200000,end:now-3600000,reason:'Проверка атомарности'}});

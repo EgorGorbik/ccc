@@ -10,6 +10,7 @@ import {authenticate,publicAuth,safePerson} from '@/lib/auth';
 import {readiness} from '@/lib/readiness';
 import {storeScreenshot,listScreenshots,screenshotOwner,screenshotFile,assertCanView,listWorkBlocks,writeWorkBlock,SHOT_LIMIT} from '@/lib/screenshots';
 import {payView,saveRate,saveBudget,usdCents,validDate} from '@/lib/pay';
+import {officeHandle} from '@/lib/office';
 function thisWeek(now=Date.now()){
  const today=localDate(now);
  const d=new Date(today+'T12:00:00Z');
@@ -42,6 +43,7 @@ async function handle(req:Request){
  }
  const b=await readBody(req);const publicResult=await publicAuth(path,b,platform);if(publicResult)return publicResult;
  const {loginHash,me}=await authenticate(req,platform.userId);const admin=me.role==='owner'||me.role==='admin';const needAdmin=()=>{if(!admin)fail('Требуются права администратора',403);};
+ if(path.startsWith('office/')){const office=await officeHandle(path,method,url,b,me);if(office)return office;}
  if(path==='readiness'){needAdmin();const status=await readiness();return json(status,status.ready?200:503);}
  if(path==='me'&&method==='GET')return json({me,accountConnected:!!account,serverTime:Date.now()});
  if(path==='logout'&&method==='POST'){

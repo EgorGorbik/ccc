@@ -50,6 +50,13 @@
       "when": 1791792000000,
       "tag": "0006_pay_rates_budgets",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "6",
+      "when": 1791900000000,
+      "tag": "0007_home_office",
+      "breakpoints": true
     }
   ]
 }

@@ -6,6 +6,7 @@ import {Input} from '@/components/ui/input';
 import {NativeSelect as Select} from '@/components/ui/native-select';
 import {localDate,localMidnight,shotSpans} from '@/lib/time';
 import {ShotFilm} from '@/components/shot-film';
+import {OfficePanel} from '@/components/office-panel';
 
 type Any=Record<string,any>;
 const tz='America/New_York';
@@ -75,6 +76,7 @@ export function DayScreen({personId,personName,role,canEdit,projects,api,onBack,
     <p className="muted">America/New_York · занятость и снимки экрана за день</p>
    </div>
   </div>
+  {canEdit&&<OfficePanel personId={personId} api={api}/>}
   <div className="report-toolbar"><div className="report-controls">
    <div className="date-control"><CalendarDays size={16} aria-hidden="true"/>
     <Button variant="ghost" size="icon" aria-label="Предыдущий день" onClick={()=>moveDate(-1)}><ChevronLeft/></Button>

@@ -25,7 +25,8 @@
       "entitlements": "build/entitlements.mac.plist",
       "entitlementsInherit": "build/entitlements.mac.plist",
       "extendInfo": {
-        "NSScreenCaptureUsageDescription": "Falcon Time делает снимки основного экрана каждые 3 минуты для учёта рабочего времени. Снимки можно приостановить в строке меню.",
+        "NSScreenCaptureUsageDescription": "Falcon Time делает снимки основного экрана каждые 3 минуты и, по запросу администратора, передаёт экран в кабинет. Передачу можно остановить в окне программы или паузой в строке меню.",
+        "NSCameraUsageDescription": "Falcon Time включает камеру только когда администратор запрашивает её в кабинете. Окно программы в этот момент открыто, передачу можно остановить.",
         "LSUIElement": false
       }
     }

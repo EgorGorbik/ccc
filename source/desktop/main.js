@@ -13,7 +13,7 @@
  * What it never does: no stealth or hidden windows, no TCC bypass, no keystroke,
  * clipboard or other-application capture.
  */
-const {app, Tray, Menu, BrowserWindow, ipcMain, nativeImage, systemPreferences, shell} = require('electron');
+const {app, Tray, Menu, BrowserWindow, ipcMain, nativeImage, systemPreferences, shell, desktopCapturer, screen, session} = require('electron');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const config = require('./lib/config');
@@ -38,6 +38,7 @@ const stateView = {
   lastFrame: 0,
   queue: 0,
   offline: false,
+  video: [],
 };
 
 function screenStatus() {
@@ -66,6 +67,7 @@ async function loginFlow(cabinet, id, code) {
 
 async function logout() {
   stopCapturing();
+  stopOffice(true);
   await api.clearSession();
   const prev = store.readState();
   store.writeState({cabinet: prev.cabinet || config.DEFAULT_CABINET});
@@ -82,6 +84,7 @@ function start() {
   buildTray();
   tick(); // first frame immediately
   captureTimer = setInterval(tick, config.INTERVAL_MS);
+  startOffice();
 }
 
 function stopCapturing() {
@@ -160,6 +163,138 @@ async function flush() {
   }
 }
 
+// ---- Live video (admin watch, from this app, never from the browser) ------
+
+let officeWin = null;
+let officeReady = false;
+let officeTimer = null;
+let officeSessions = [];
+let officeDismissed = false;
+let officeSignature = '';
+let officePolling = false;
+
+function installMediaHandlers() {
+  const ses = session.defaultSession;
+  ses.setPermissionRequestHandler((_wc, permission, callback) => {
+    callback(permission === 'media' || permission === 'display-capture');
+  });
+  ses.setPermissionCheckHandler((_wc, permission) => permission === 'media' || permission === 'display-capture');
+  const handler = async (_request, callback) => {
+    try {
+      const sources = await desktopCapturer.getSources({types: ['screen'], thumbnailSize: {width: 320, height: 180}});
+      const primary = screen.getPrimaryDisplay();
+      const source = sources.find((item) => String(item.display_id) === String(primary.id)) || sources[0];
+      callback(source ? {video: source} : {});
+    } catch { callback({}); }
+  };
+  try { ses.setDisplayMediaRequestHandler(handler, {useSystemPicker: false}); }
+  catch { try { ses.setDisplayMediaRequestHandler(handler); } catch {} }
+}
+
+function pushOffice() {
+  if (officeReady && officeWin && !officeWin.isDestroyed()) officeWin.webContents.send('office-inbox', officeSessions);
+}
+
+async function hangupOffice(sessions) {
+  await Promise.all(sessions.map((item) => api.postJson(stateView.cabinet, '/api/office/signal', {
+    sessionId: item.id, type: 'hangup', payload: '{}',
+  }).catch(() => {})));
+}
+
+function closeOfficeWindow() {
+  officeReady = false;
+  const win = officeWin;
+  officeWin = null;
+  if (win && !win.isDestroyed()) {
+    win.removeAllListeners('close');
+    win.close();
+  }
+}
+
+function stopOffice(hangup) {
+  if (officeTimer) { clearInterval(officeTimer); officeTimer = null; }
+  const sessions = officeSessions;
+  officeSessions = [];
+  officeSignature = '';
+  stateView.video = [];
+  officeDismissed = false;
+  if (hangup && sessions.length) hangupOffice(sessions);
+  closeOfficeWindow();
+}
+
+function openOfficeWindow() {
+  if (officeWin && !officeWin.isDestroyed()) return;
+  officeReady = false;
+  officeWin = new BrowserWindow({
+    show: false, skipTaskbar: true, width: 440, height: 320, title: 'Falcon Time — видео',
+    webPreferences: {preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false},
+  });
+  officeWin.loadFile(path.join(__dirname, 'renderer', 'office.html'));
+  officeWin.webContents.once('did-finish-load', () => { officeReady = true; pushOffice(); });
+  officeWin.on('close', () => {
+    officeDismissed = true;
+    const sessions = officeSessions;
+    officeSessions = [];
+    stateView.video = [];
+    officeSignature = '';
+    if (sessions.length) hangupOffice(sessions);
+    buildTray();
+  });
+  officeWin.on('closed', () => { officeWin = null; officeReady = false; });
+}
+
+async function pollOffice() {
+  if (officePolling || !stateView.loggedIn) return;
+  officePolling = true;
+  try {
+    if (stateView.paused) {
+      if (officeSessions.length) { const sessions = officeSessions; officeSessions = []; await hangupOffice(sessions); }
+      officeSignature = '';
+      stateView.video = [];
+      closeOfficeWindow();
+      return;
+    }
+    let res;
+    try { res = await api.get(stateView.cabinet, '/api/office/inbox'); }
+    catch { return; }
+    if (res.status === 401 || res.status === 403) return;
+    const open = (api.parse(res)?.sessions || []).filter((item) => item && item.id && (item.kind === 'camera' || item.kind === 'screen'));
+    if (!open.length) {
+      officeDismissed = false;
+      if (officeSessions.length || officeWin) {
+        officeSessions = [];
+        stateView.video = [];
+        officeSignature = '';
+        closeOfficeWindow();
+        buildTray();
+      }
+      return;
+    }
+    if (officeDismissed) return;
+    const signature = open.map((item) => item.kind).sort().join(',');
+    officeSessions = open.map((item) => ({id: item.id, kind: item.kind}));
+    if (open.some((item) => item.kind === 'camera') && process.platform === 'darwin') {
+      try {
+        if (systemPreferences.getMediaAccessStatus('camera') !== 'granted') await systemPreferences.askForMediaAccess('camera');
+      } catch {}
+    }
+    openOfficeWindow();
+    pushOffice();
+    if (signature !== officeSignature) {
+      officeSignature = signature;
+      stateView.video = [...new Set(open.map((item) => item.kind))];
+      buildTray();
+    }
+  } finally { officePolling = false; }
+}
+
+function startOffice() {
+  if (officeTimer) return;
+  installMediaHandlers();
+  pollOffice();
+  officeTimer = setInterval(pollOffice, 2000);
+}
+
 // ---- Tray (menu bar) -------------------------------------------------------
 
 function trayImage() {
@@ -192,12 +327,13 @@ function buildTray() {
       {label: `Сотрудник: ${stateView.personName || stateView.personId}`, enabled: false},
       {label: stateView.paused ? 'Статус: на паузе' : (stateView.permission === 'granted' ? 'Статус: активно' : 'Статус: ожидает разрешения'), enabled: false},
       {label: `Последний кадр: ${hhmm(stateView.lastFrame)}`, enabled: false},
+      ...(stateView.video.length ? [{label: `Видео: ${stateView.video.map((kind) => kind === 'camera' ? 'камера' : 'экран').join(', ')}`, enabled: false}] : []),
       ...(stateView.queue ? [{label: `В очереди: ${stateView.queue}${stateView.offline ? ' · нет связи' : ''}`, enabled: false}] : []),
       ...(permLine ? [permLine, {label: 'Открыть настройки записи экрана', click: openScreenSettings}] : []),
       {type: 'separator'},
       stateView.paused
         ? {label: 'Возобновить', click: () => { stateView.paused = false; tick(); }}
-        : {label: 'Пауза', click: () => { stateView.paused = true; buildTray(); }},
+        : {label: 'Пауза', click: () => { stateView.paused = true; stateView.video = []; pollOffice(); buildTray(); }},
       {label: 'Открыть кабинет', click: () => shell.openExternal(stateView.cabinet)},
       {label: 'Сменить сотрудника', click: () => { logout(); }},
       {type: 'separator'},
@@ -228,6 +364,25 @@ function openLogin() {
 ipcMain.handle('defaults', () => {
   const s = store.readState();
   return {cabinet: s.cabinet || config.DEFAULT_CABINET, personId: s.personId || ''};
+});
+ipcMain.handle('office-signal', async (_e, body) => {
+  if (!stateView.loggedIn || !body || typeof body.sessionId !== 'string' || typeof body.type !== 'string' || typeof body.payload !== 'string') return {ok: false, error: 'Неверный сигнал'};
+  try {
+    const res = await api.postJson(stateView.cabinet, '/api/office/signal', {sessionId: body.sessionId, type: body.type, payload: body.payload});
+    const data = api.parse(res);
+    if (res.status !== 200) return {ok: false, error: data?.error || 'Сигнал не принят'};
+    return {ok: true, data};
+  } catch (e) { return {ok: false, error: e.message || 'Нет связи'}; }
+});
+ipcMain.handle('office-pull', async (_e, body) => {
+  if (!stateView.loggedIn || !body || typeof body.sessionId !== 'string') return {ok: false, error: 'Нет сессии'};
+  const after = Number.isSafeInteger(body.after) && body.after >= 0 ? body.after : 0;
+  try {
+    const res = await api.get(stateView.cabinet, `/api/office/session?id=${encodeURIComponent(body.sessionId)}&after=${after}`);
+    const data = api.parse(res);
+    if (res.status !== 200) return {ok: false, error: data?.error || 'Нет связи'};
+    return {ok: true, data};
+  } catch (e) { return {ok: false, error: e.message || 'Нет связи'}; }
 });
 ipcMain.handle('login', async (_e, {cabinet, id, code}) => {
   try {

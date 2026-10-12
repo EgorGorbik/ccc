@@ -13,6 +13,8 @@ export async function readiness() {
     backups:['id','verified','object_key'],
     pay_rates:['id','person_id','usd_cents','effective_from'],
     project_budgets:['id','project_id','usd_cents','start','end'],
+    office_sessions:['id','person_id','kind','status','owner_seen'],
+    office_signals:['id','session_id','payload'],
   };
   let database = 'ready', storage = 'ready';
   try {

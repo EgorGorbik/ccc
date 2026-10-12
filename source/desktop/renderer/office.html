@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<title>Falcon Time — видео</title>
+<style>
+  :root{color-scheme:dark;--bg:#101313;--fg:#eeefea;--muted:#9da8a2;--primary:#d5be8e;--primary-fg:#1e1d17;--border:#2b322f;}
+  *{box-sizing:border-box;}
+  body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--fg);}
+  .wrap{padding:22px 24px;display:flex;flex-direction:column;gap:12px;min-height:100vh;}
+  h1{font-size:1.05rem;font-weight:550;margin:0;}
+  p{margin:0;color:var(--muted);font-size:.85rem;}
+  ul{margin:0;padding:0;list-style:none;display:grid;gap:6px;}
+  li{font-size:.9rem;}
+  .err{color:#ffd0cb;font-size:.85rem;}
+  button{min-height:40px;background:transparent;color:var(--fg);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.9rem;}
+  button.primary{background:var(--primary);color:var(--primary-fg);border:0;font-weight:600;}
+  .row{display:flex;gap:8px;margin-top:auto;}
+  .row button{flex:1;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Передача видео в кабинет</h1>
+  <p>Администратор запросил видео. Картинка идёт только в кабинет Falcon Time. Закройте это окно или нажмите «Остановить», чтобы прервать.</p>
+  <ul id="lines"></ul>
+  <p class="err" id="err"></p>
+  <div class="row">
+    <button class="primary" id="retry" hidden>Разрешить снова</button>
+    <button id="stop">Остановить</button>
+  </div>
+</div>
+<script src="office.js"></script>
+</body>
+</html>
