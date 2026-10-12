@@ -9,9 +9,9 @@ export class Problem extends Error {
     this.responseHeaders = responseHeaders;
   }
 }
-export const fail = (message: string, status = 400, headers: Record<string,string> = {}): never => {
+export function fail(message: string, status = 400, headers: Record<string,string> = {}): never {
   throw new Problem(message, status, headers);
-};
+}
 export const json = (data: unknown, status = 200, headers: Record<string,string> = {}) =>
   Response.json(data, {status, headers: {'Cache-Control': 'no-store', ...headers}});
 export function field(value: unknown, max = 120): string {

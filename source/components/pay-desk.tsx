@@ -22,7 +22,7 @@ function BudgetMeter({budget,use}:{budget:Any;use?:Any}){
 }
 
 export function PayDesk({api,act,demo,period,date,setPeriod,setDate,moveDate,busy}:{
- api:(path:string)=>Promise<Any>;act:(path:string,body:Any,success?:string)=>Promise<Any>;demo:boolean;
+ api:(path:string)=>Promise<Any>;act:(path:string,body:Any,success?:string)=>Promise<Any|null>;demo:boolean;
  period:string;date:string;setPeriod:(v:string)=>void;setDate:(v:string)=>void;moveDate:(d:number)=>void;busy:boolean;
 }){
  const [view,setView]=useState<Any|null>(null),[open,setOpen]=useState(''),[localError,setLocalError]=useState('');

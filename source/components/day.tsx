@@ -47,8 +47,8 @@ export function DayScreen({personId,personName,role,canEdit,projects,api,onBack,
  function moveDate(step:number){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+step);setDate(d.toISOString().slice(0,10));}
 
  const fallback=activeProjects.find(p=>p.id!=='none')?.id||activeProjects[0]?.id||'';
- const auto=shotSpans(shots.map(s=>s.taken_at),blocks).map(s=>({id:`auto:${s.start}`,start:s.start,end:s.end,project_id:fallback,note:'',auto:true}));
- const shown=[...blocks.map(b=>({...b,auto:false})),...auto].sort((a,b)=>a.start-b.start);
+ const auto=shotSpans(shots.map(s=>s.taken_at),blocks.map(b=>({start:Number(b.start),end:Number(b.end)}))).map(s=>({id:`auto:${s.start}`,start:s.start,end:s.end,project_id:fallback,note:'',auto:true}));
+ const shown=[...blocks.map(b=>({id:String(b.id),start:Number(b.start),end:Number(b.end),project_id:String(b.project_id??''),note:String(b.note??''),auto:false})),...auto].sort((a,b)=>a.start-b.start);
  const activeBlock=shown.find(b=>b.id===active);
  const feed=activeBlock?shots.filter(s=>s.taken_at>=activeBlock.start&&s.taken_at<activeBlock.end):shots;
 

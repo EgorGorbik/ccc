@@ -3,9 +3,9 @@ import {useEffect} from 'react';
 import {ChevronLeft,ChevronRight,X} from 'lucide-react';
 
 export function ShotFilm({shots,current,onPick,onClose,caption}:{
- shots:{id:string}[];
- current:{id:string};
- onPick:(shot:{id:string})=>void;
+ shots:Record<string,any>[];
+ current:Record<string,any>;
+ onPick:(shot:Record<string,any>)=>void;
  onClose:()=>void;
  caption:string;
 }){

@@ -147,7 +147,7 @@ export function EmployeeOverview({name,api}:{name:string;api:Api}){
  const fallback=real[0]?.id||'';
  const tagged=month.map(s=>!s.project_id||s.project_id==='none'?{...s,project_id:fallback}:s);
  const total=duration(tagged);
- const allocation=real.map(p=>({...p,ms:duration(tagged.filter(s=>s.project_id===p.id))})).filter(p=>p.ms>0).sort((a,b)=>b.ms-a.ms);
+ const allocation=real.map(p=>({id:String(p.id),name:String(p.name??''),ms:duration(tagged.filter(s=>s.project_id===p.id))})).filter(p=>p.ms>0).sort((a,b)=>b.ms-a.ms);
  return <div>
   <div className="heading"><div>
    <div className="eyebrow">ТОЛЬКО ВАШ УЧЁТ</div>
