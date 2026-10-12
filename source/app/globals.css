@@ -499,6 +499,17 @@ select option { background: var(--card); color: var(--foreground); }
 .pay-rate small { color: #8d9d90; font-size: .8rem; }
 .pay-history { margin: 8px 0 16px; padding: 0; list-style: none; color: #8d9d90; font-size: .75rem; display: grid; gap: 4px; }
 .pay-over { color: #e7b3a2; }
+.budget-meter { margin: 14px 0 6px; padding: 14px 14px 12px; border: 1px solid #3a4638; border-radius: 10px; background: #1c241e; }
+.budget-meter.over { border-color: #6a4036; background: #2a1d1a; }
+.budget-meter-top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.budget-meter-top span { color: #9aaa9f; font-size: .75rem; letter-spacing: .04em; text-transform: uppercase; }
+.budget-meter-top strong { font-size: 1.25rem; font-weight: 450; font-variant-numeric: tabular-nums; color: #f2eddf; }
+.budget-meter-top small { color: #8d9d90; font-size: .8rem; font-weight: 400; }
+.budget-meter.over .budget-meter-top strong { color: #e7b3a2; }
+.budget-track { margin-top: 10px; height: 8px; border-radius: 99px; background: #2c362e; overflow: hidden; }
+.budget-track > div { height: 100%; border-radius: 99px; background: #c8b588; }
+.budget-meter.over .budget-track > div { background: #e7b3a2; }
+.budget-meter > small { display: block; margin-top: 8px; color: #8d9d90; font-size: .75rem; }
 .pay-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; align-items: end; margin-top: 8px; }
 .pay-form label { display: grid; gap: 6px; font-size: .75rem; color: #9aaa9f; }
 .pay-form button { grid-column: 1 / -1; }
