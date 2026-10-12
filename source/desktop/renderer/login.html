@@ -3,17 +3,14 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Falcon Time</title>
+<title>Falcon Assistant</title>
 <style>
   :root{color-scheme:dark;--bg:#101313;--fg:#eeefea;--muted:#9da8a2;--card:#171b1a;--border:#2b322f;--primary:#d5be8e;--primary-fg:#1e1d17;--input:#141917;}
   *{box-sizing:border-box;}
   body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--fg);}
   .wrap{padding:30px 28px;display:flex;flex-direction:column;min-height:100vh;}
-  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em;margin-bottom:6px;}
-  .dot{width:26px;height:26px;border-radius:50%;border:2px solid var(--primary);position:relative;}
-  .dot::before,.dot::after{content:"";position:absolute;background:var(--primary);left:50%;top:50%;transform-origin:left center;}
-  .dot::before{width:7px;height:2px;transform:translate(-1px,-1px) rotate(-90deg);}
-  .dot::after{width:5px;height:2px;transform:translate(-1px,-1px) rotate(0deg);}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.04em;margin-bottom:6px;}
+  .mark{width:28px;height:28px;border-radius:9px;background:linear-gradient(160deg,#ead7a6,#8d7848);color:#1e1d17;display:grid;place-items:center;font-size:13px;font-weight:700;}
   small.sub{color:var(--muted);display:block;margin-bottom:22px;}
   h1{font-size:1.25rem;font-weight:550;margin:0 0 4px;}
   p.lead{color:var(--muted);margin:0 0 20px;font-size:.9rem;}
@@ -24,26 +21,22 @@
   button:disabled{opacity:.6;cursor:default;}
   .err{background:#3a2420;border:1px solid #ef9b97;color:#ffd9d4;border-radius:8px;padding:10px 12px;font-size:.85rem;margin-bottom:16px;display:none;}
   .err.show{display:block;}
-  .note{margin-top:auto;padding-top:22px;color:var(--muted);font-size:.78rem;line-height:1.5;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><span class="dot"></span><span>FALCON TIME</span></div>
-  <small class="sub">Снимки экрана и видео по запросу администратора</small>
-  <h1>Вход сотрудника</h1>
-  <p class="lead">Тот же логин и личный код, что и в кабинете Falcon Time.</p>
+  <div class="brand"><span class="mark">✦</span><span>FALCON ASSISTANT</span></div>
+  <small class="sub">AI</small>
+  <h1>Продолжить</h1>
+  <p class="lead">Войдите, чтобы открыть ассистента на этом компьютере.</p>
   <div class="err" id="err" role="alert"></div>
   <form id="form">
-    <label for="cabinet">Адрес кабинета</label>
-    <input id="cabinet" name="cabinet" type="url" autocomplete="off" spellcheck="false"/>
-    <label for="id">Логин сотрудника</label>
+    <label for="id">Логин</label>
     <input id="id" name="id" type="text" autocomplete="username" required/>
-    <label for="code">Личный код</label>
+    <label for="code">Код доступа</label>
     <input id="code" name="code" type="password" autocomplete="current-password" required/>
     <button id="submit" type="submit">Войти</button>
   </form>
-  <p class="note">После входа и разрешения macOS «Запись экрана» агент снимает основной экран раз в 3 минуты и отправляет кадры только в этот кабинет. Снимки можно приостановить в меню в строке состояния.</p>
 </div>
 <script src="./login.js"></script>
 </body>

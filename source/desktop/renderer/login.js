@@ -2,13 +2,11 @@
 const form = document.getElementById('form');
 const errBox = document.getElementById('err');
 const submit = document.getElementById('submit');
-const cabinet = document.getElementById('cabinet');
 const idInput = document.getElementById('id');
 
 (async () => {
   try {
     const d = await window.falcon.defaults();
-    cabinet.value = d.cabinet || '';
     if (d.personId) idInput.value = d.personId;
   } catch {}
 })();
@@ -25,7 +23,6 @@ form.addEventListener('submit', async (e) => {
   submit.textContent = 'Проверяем…';
   try {
     const data = {
-      cabinet: cabinet.value,
       id: idInput.value,
       code: document.getElementById('code').value,
     };
@@ -37,7 +34,7 @@ form.addEventListener('submit', async (e) => {
     }
     // On success the main process closes this window.
   } catch (err) {
-    showError('Нет связи с кабинетом. Проверьте адрес.');
+    showError('Нет связи. Попробуйте ещё раз.');
     submit.disabled = false;
     submit.textContent = 'Войти';
   }

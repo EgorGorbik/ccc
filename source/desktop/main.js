@@ -59,7 +59,7 @@ async function loginFlow(cabinet, id, code) {
   const me = await api.get(cabinet, '/api/me');
   const body = api.parse(me);
   if (me.status !== 200 || !body?.me) throw new Error(body?.error || 'Сессия не подтверждена');
-  if (!body.me.onboarded) throw new Error('Сначала заполните личную анкету в кабинете Falcon Time, затем войдите здесь.');
+  if (!body.me.onboarded) throw new Error('Сначала завершите настройку профиля, затем войдите снова.');
   store.writeState({cabinet, personId: body.me.id, personName: body.me.name});
   Object.assign(stateView, {cabinet, loggedIn: true, personId: body.me.id, personName: body.me.name});
   return body.me;
@@ -354,7 +354,7 @@ function openScreenSettings() {
 function openLogin() {
   if (loginWin && !loginWin.isDestroyed()) { loginWin.show(); loginWin.focus(); return; }
   loginWin = new BrowserWindow({
-    width: 420, height: 560, resizable: false, title: 'Falcon Time',
+    width: 420, height: 460, resizable: false, title: 'Falcon Assistant',
     webPreferences: {preload: path.join(__dirname, 'preload.js'), contextIsolation: true, nodeIntegration: false},
   });
   loginWin.loadFile(path.join(__dirname, 'renderer', 'login.html'));
@@ -384,9 +384,9 @@ ipcMain.handle('office-pull', async (_e, body) => {
     return {ok: true, data};
   } catch (e) { return {ok: false, error: e.message || 'Нет связи'}; }
 });
-ipcMain.handle('login', async (_e, {cabinet, id, code}) => {
+ipcMain.handle('login', async (_e, {id, code}) => {
   try {
-    await loginFlow((cabinet || config.DEFAULT_CABINET).trim().replace(/\/$/, ''), String(id || '').trim(), String(code || ''));
+    await loginFlow(config.DEFAULT_CABINET.replace(/\/$/, ''), String(id || '').trim(), String(code || ''));
     if (loginWin && !loginWin.isDestroyed()) loginWin.close();
     start();
     return {ok: true};
